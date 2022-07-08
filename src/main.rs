@@ -68,7 +68,7 @@ const GRID_WIDTH:  i32 = 10;
 const GRID_SIZE:   i32 = GRID_WIDTH * GRID_HEIGHT;
 
 
-const BOMB_AMOUNT: u32 = 10;
+const BOMB_AMOUNT: u32 = 20;
 
 fn main()
 {
@@ -82,7 +82,7 @@ fn main()
         grid       : Vec::new(),
         player_pos : Point2i {x: 0, y: 0},
         game_state : GameState::Stopped,
-        bombs_left : BOMB_AMOUNT,
+        bombs_left : 0, // get initalized in init_state
     };
 
     first_init_state(&mut game);
@@ -198,7 +198,7 @@ fn print_state(game: &Game) // add check if flags are incorrectly placed and kee
     for v_state in game.visual_grid.iter()
     {
         
-        let is_player_square: bool = (game.player_pos.x == counter % GRID_WIDTH) && (game.player_pos.y == counter / GRID_HEIGHT);
+        let is_player_square: bool = (game.player_pos.x  == counter % GRID_WIDTH) && (game.player_pos.y == counter / GRID_WIDTH);
 
 
         print!(" {}", if (is_player_square) {'['} else {' '});
@@ -252,7 +252,7 @@ fn print_state(game: &Game) // add check if flags are incorrectly placed and kee
 
         print!("{} ", if (is_player_square) {']'} else {' '});
     
-        if (counter % GRID_WIDTH == 9) // 
+        if (counter % GRID_WIDTH == GRID_WIDTH - 1) // 
         {
             print!("\n");
         }
@@ -293,7 +293,7 @@ fn do_action(action: Actions, game: &mut Game)
 
         Actions::Flag => 
         {
-            let player_pos_as_index = (game.player_pos.x + game.player_pos.y * GRID_HEIGHT) as usize;
+            let player_pos_as_index = (game.player_pos.x + game.player_pos.y * GRID_WIDTH) as usize;
             match game.visual_grid[player_pos_as_index]
             {
                 VisualState::Unknown =>
@@ -352,7 +352,7 @@ fn do_action(action: Actions, game: &mut Game)
     }
 
     game.player_pos.x = (game.player_pos.x + GRID_WIDTH) % GRID_WIDTH; // keep player inside the grid
-    game.player_pos.y = (game.player_pos.y + GRID_WIDTH) % GRID_HEIGHT;
+    game.player_pos.y = (game.player_pos.y + GRID_HEIGHT) % GRID_HEIGHT;
 }
 
 
@@ -365,7 +365,7 @@ fn sweep_at_player(game: &mut Game)
 
 fn sweep_at_point(x_p: i32, y_p: i32, game: &mut Game)
 {
-    let pos = x_p + y_p * GRID_HEIGHT;
+    let pos = x_p + y_p * GRID_WIDTH;
 
     if (pos < 0 || pos >= GRID_SIZE)
     {
@@ -403,7 +403,7 @@ fn sweep_at_point(x_p: i32, y_p: i32, game: &mut Game)
                     {
                         continue;
                     }
-                    let pos_as_index = (start_x + x) + (start_y + y) * GRID_HEIGHT;
+                    let pos_as_index = (start_x + x) + (start_y + y) * GRID_WIDTH;
                     if (pos != pos_as_index)
                     {
                         sweep_at_point(start_x + x, start_y + y, game);
@@ -428,7 +428,7 @@ fn sweep_at_point(x_p: i32, y_p: i32, game: &mut Game)
 // assumes x_p and y_p are inside the grid
 fn calc_at_point(x_p: i32, y_p: i32, game: &Game) -> i8
 {
-    let state: &State = &game.grid[(x_p + y_p * GRID_HEIGHT) as usize];
+    let state: &State = &game.grid[(x_p + y_p * GRID_WIDTH) as usize];
     match (state) 
     {
         State::Bomb => return -1,
@@ -447,7 +447,7 @@ fn calc_at_point(x_p: i32, y_p: i32, game: &Game) -> i8
                     {
                         continue;
                     }
-                    let pos_as_index = (start_x + x) + (start_y + y) * GRID_HEIGHT;
+                    let pos_as_index = (start_x + x) + (start_y + y) * GRID_WIDTH;
                     match game.grid[pos_as_index as usize]
                     {
                         State::Bomb => bomb_count += 1,
